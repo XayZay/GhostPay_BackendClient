@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsMerchant(merchantId) {
+      return signedIn() && request.auth.uid == merchantId;
+    }
+
+    match /merchants/{merchantId} {
+      allow read, write: if ownsMerchant(merchantId);
+
+      match /{document=**} {
+        allow read, write: if ownsMerchant(merchantId);
+      }
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if signedIn() && resource.data.merchantId == request.auth.uid;
+      allow write: if signedIn()
+        && request.resource.data.merchantId == request.auth.uid;
+    }
+
+    match /fcmTokens/{tokenId} {
+      allow read: if signedIn() && resource.data.merchantId == request.auth.uid;
+      allow write: if signedIn()
+        && request.resource.data.merchantId == request.auth.uid;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

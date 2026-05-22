@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /merchants/{merchantId}/{allPaths=**} {
+      allow read, write: if signedIn() && request.auth.uid == merchantId;
+    }
+
+    match /audio/{merchantId}/{allPaths=**} {
+      allow read, write: if signedIn() && request.auth.uid == merchantId;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
