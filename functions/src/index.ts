@@ -29,11 +29,23 @@ interface KoraCharge {
   reference: string;
 }
 
+interface KoraEvent {
+  data?: {
+    reference?: string;
+    transaction_reference?: string;
+    status?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 interface ParsedPaymentData {
   amount: number;
   description: string;
   customer_phone: string;
 }
+
+const db = admin.firestore();
 
 /**
  * Parse multipart/form-data and extract the first audio file field.
@@ -111,10 +123,9 @@ const transcribeAudio = async (audio: AudioFile): Promise<string> => {
 };
 
 const initializeKoraCharge = async (
-  parsedData: ParsedPaymentData
+  parsedData: ParsedPaymentData,
+  reference: string
 ): Promise<KoraCharge> => {
-  const reference = `gp_${Date.now()}`;
-
   try {
     const secretKey = process.env.KORA_SECRET_KEY;
     const webhookUrl = process.env.KORA_WEBHOOK_URL;
@@ -165,6 +176,19 @@ const initializeKoraCharge = async (
     logger.error("Kora initialization failed", {error, reference});
     throw new Error("Payment link generation failed");
   }
+};
+
+const createTransaction = async (
+  reference: string,
+  parsedData: ParsedPaymentData
+): Promise<void> => {
+  await db.collection("transactions").doc(reference).set({
+    status: "pending",
+    amount: parsedData.amount,
+    customer: parsedData.customer_phone,
+    item: parsedData.description,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
 };
 
 const sendWhatsAppPaymentLink = async (
@@ -226,6 +250,10 @@ const sendWhatsAppPaymentLink = async (
   }
 };
 
+const getRawBody = (req: Request): Buffer => {
+  return (req as Request & {rawBody?: Buffer}).rawBody ?? Buffer.from("");
+};
+
 const sendMethodNotAllowed = (res: Response, allowedMethod: string): void => {
   res.set("Allow", allowedMethod).status(405).json({
     error: "method_not_allowed",
@@ -263,9 +291,11 @@ const verifyKoraSignature = (req: Request, res: Response): boolean => {
     return false;
   }
 
-  const signature = req.header("x-korapay-signature") ?? "";
-  const body = JSON.stringify(req.body ?? {});
-  const digest = crypto.createHmac("sha256", secret).update(body).digest("hex");
+  const signature = (req.header("x-korapay-signature") ?? "").trim();
+  const digest = crypto
+    .createHmac("sha256", secret)
+    .update(getRawBody(req))
+    .digest("hex");
 
   const signatureBuffer = Buffer.from(signature);
   const digestBuffer = Buffer.from(digest);
@@ -280,6 +310,44 @@ const verifyKoraSignature = (req: Request, res: Response): boolean => {
   logger.warn("Kora signature verification failed");
   res.status(401).json({error: "invalid_signature"});
   return false;
+};
+
+const parseKoraEvent = (req: Request): KoraEvent => {
+  if (req.body && typeof req.body === "object") {
+    return req.body as KoraEvent;
+  }
+
+  const rawBody = getRawBody(req).toString("utf8");
+  return rawBody ? JSON.parse(rawBody) as KoraEvent : {};
+};
+
+const markTransactionPaid = async (event: KoraEvent): Promise<void> => {
+  const data = event.data;
+  if (data?.status !== "success") {
+    return;
+  }
+
+  const reference = data.reference ?? data.transaction_reference;
+  if (!reference) {
+    logger.error("Kora success event missing reference", {event});
+    return;
+  }
+
+  const transactionRef = db.collection("transactions").doc(reference);
+  const snapshot = await transactionRef.get();
+  const paidAt = admin.firestore.FieldValue.serverTimestamp();
+
+  if (snapshot.exists) {
+    await transactionRef.update({status: "paid", paidAt});
+    return;
+  }
+
+  await transactionRef.set({
+    ...data,
+    status: "paid",
+    paidAt,
+    event,
+  });
 };
 
 export const voiceIngest = onRequest(async (req, res) => {
@@ -306,7 +374,10 @@ export const voiceIngest = onRequest(async (req, res) => {
     const parsedData = await parseIntent(transcript);
     console.log("Parsed intent:", parsedData);
 
-    const koraCharge = await initializeKoraCharge(parsedData);
+    const reference = `gp_${Date.now()}`;
+    await createTransaction(reference, parsedData);
+
+    const koraCharge = await initializeKoraCharge(parsedData, reference);
     const whatsappSent = await sendWhatsAppPaymentLink(
       parsedData,
       koraCharge.checkoutUrl
@@ -340,6 +411,13 @@ export const koraWebhook = onRequest(async (req, res) => {
 
   if (!verifyKoraSignature(req, res)) {
     return;
+  }
+
+  try {
+    const event = parseKoraEvent(req);
+    await markTransactionPaid(event);
+  } catch (error) {
+    logger.error("Kora webhook processing failed", {error});
   }
 
   res.status(200).json({received: true});
