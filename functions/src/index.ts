@@ -24,6 +24,17 @@ interface AudioFile {
   mimeType: string;
 }
 
+interface KoraCharge {
+  checkoutUrl: string;
+  reference: string;
+}
+
+interface ParsedPaymentData {
+  amount: number;
+  description: string;
+  customer_phone: string;
+}
+
 /**
  * Parse multipart/form-data and extract the first audio file field.
  */
@@ -97,6 +108,63 @@ const transcribeAudio = async (audio: AudioFile): Promise<string> => {
 
   const data = (await response.json()) as {text: string};
   return data.text;
+};
+
+const initializeKoraCharge = async (
+  parsedData: ParsedPaymentData
+): Promise<KoraCharge> => {
+  const reference = `gp_${Date.now()}`;
+
+  try {
+    const secretKey = process.env.KORA_SECRET_KEY;
+    const webhookUrl = process.env.KORA_WEBHOOK_URL;
+
+    if (!secretKey || !webhookUrl) {
+      throw new Error("Kora environment variables are not configured");
+    }
+
+    const response = await fetch(
+      "https://api.korapay.com/merchant/api/v1/charges/initialize",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: parsedData.amount,
+          currency: "NGN",
+          reference,
+          narration: parsedData.description,
+          customer: {
+            email: "customer@ghostpay.app",
+            name: "Ghost Pay Customer",
+          },
+          notification_url: webhookUrl,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Kora API error ${response.status}: ${body}`);
+    }
+
+    const data = (await response.json()) as {
+      data?: {checkout_url?: string};
+    };
+    const checkoutUrl = data.data?.checkout_url;
+
+    if (!checkoutUrl) {
+      throw new Error("Kora response missing checkout_url");
+    }
+
+    logger.info("Kora charge initialized", {reference});
+    return {checkoutUrl, reference};
+  } catch (error) {
+    logger.error("Kora initialization failed", {error, reference});
+    throw new Error("Payment link generation failed");
+  }
 };
 
 const sendMethodNotAllowed = (res: Response, allowedMethod: string): void => {
@@ -176,18 +244,20 @@ export const voiceIngest = onRequest(async (req, res) => {
     const transcript = await transcribeAudio(audio);
     console.log("Whisper transcript:", transcript);
 
-    const parsed_data = await parseIntent(transcript);
-    console.log("Parsed intent:", parsed_data);
+    const parsedData = await parseIntent(transcript);
+    console.log("Parsed intent:", parsedData);
+
+    const koraCharge = await initializeKoraCharge(parsedData);
 
     res.status(200).json({
       status: "success",
       payload: {
-        kora_url: "",
+        kora_url: koraCharge.checkoutUrl,
         whatsapp_sent: false,
         parsed_data: {
-          amount: parsed_data.amount,
-          customer: parsed_data.customer_phone,
-          item: parsed_data.description,
+          amount: parsedData.amount,
+          customer: parsedData.customer_phone,
+          item: parsedData.description,
         },
         audio_feedback_url: "",
       },
