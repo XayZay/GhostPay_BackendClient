@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ghost Pay — Codex Sprint Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #090919;
+  --s1: #0d0d22;
+  --s2: #11112b;
+  --teal: #00A693;
+  --teal-lo: rgba(0,166,147,0.09);
+  --teal-mid: rgba(0,166,147,0.18);
+  --teal-b: rgba(0,166,147,0.28);
+  --white: #fff;
+  --g1: rgba(255,255,255,0.72);
+  --g2: rgba(255,255,255,0.40);
+  --g3: rgba(255,255,255,0.14);
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --red: #E24B4A;
+  --amber: #EF9F27;
+  --blue: #4A9EE8;
+  --pink: #D4537E;
+  --green: #4CAF7D;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Sora', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--white);font-family:var(--sans);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:820px;margin:0 auto;padding:60px 32px 100px;}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:20;background:rgba(9,9,25,0.90);backdrop-filter:blur(14px);border-bottom:0.5px solid var(--border);padding:11px 32px;display:flex;gap:0;overflow-x:auto;margin:0 -32px 52px;}
+.nav a{font-family:var(--mono);font-size:10px;letter-spacing:0.10em;color:var(--g2);text-decoration:none;white-space:nowrap;padding:4px 14px;border-right:0.5px solid var(--border);transition:color 0.15s;}
+.nav a:first-child{padding-left:0;}
+.nav a:hover{color:var(--teal);}
+
+/* ── Cover ── */
+.kicker{font-family:var(--mono);font-size:9px;letter-spacing:0.22em;color:var(--teal);text-transform:uppercase;margin-bottom:14px;}
+h1{font-size:clamp(32px,6vw,54px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin-bottom:10px;}
+h1 span{color:var(--teal);}
+.sub{font-size:14px;color:var(--g1);max-width:540px;line-height:1.8;margin-bottom:40px;}
+.divider{height:0.5px;background:var(--border);margin:44px 0;}
+
+/* ── Section ── */
+.sec-label{font-family:var(--mono);font-size:9px;letter-spacing:0.22em;color:var(--teal);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.sec-label::after{content:'';flex:1;height:0.5px;background:var(--border);}
+h2{font-size:20px;font-weight:500;letter-spacing:-0.01em;margin-bottom:6px;}
+p{color:var(--g1);line-height:1.8;margin-bottom:12px;}
+
+/* ── Cards ── */
+.card{background:var(--s1);border:0.5px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:12px;}
+.card-teal{border-color:var(--teal-b);background:var(--teal-lo);}
+.card-amber{border-color:rgba(239,159,39,0.28);background:rgba(239,159,39,0.07);}
+.card-red{border-color:rgba(226,75,74,0.28);background:rgba(226,75,74,0.07);}
+.card-blue{border-color:rgba(74,158,232,0.28);background:rgba(74,158,232,0.07);}
+
+/* ── Code blocks ── */
+.code{background:#05050f;border:0.5px solid var(--border2);border-radius:10px;padding:16px 18px;font-family:var(--mono);font-size:12px;line-height:1.75;color:#9db4bb;overflow-x:auto;margin:10px 0;}
+.code .c{color:#3d6870;font-style:italic;}
+.code .k{color:var(--teal);}
+.code .s{color:#a5d6a7;}
+.code .kw{color:#80cbc4;}
+
+/* ── Prompt blocks ── */
+.prompt-wrap{margin:8px 0;}
+.prompt-label{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;color:var(--g2);text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;}
+.copy-btn{font-family:var(--mono);font-size:9px;color:var(--teal);cursor:pointer;padding:2px 8px;border:0.5px solid var(--teal-b);border-radius:4px;background:var(--teal-lo);transition:opacity 0.15s;}
+.copy-btn:hover{opacity:0.7;}
+.prompt{background:#05050f;border:0.5px solid var(--teal-b);border-left:2px solid var(--teal);border-radius:0 8px 8px 0;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.75;color:#c5dde0;white-space:pre-wrap;word-break:break-word;}
+
+/* ── Steps ── */
+.step-list{list-style:none;counter-reset:steps;}
+.step-list li{counter-increment:steps;padding:12px 0;border-bottom:0.5px solid var(--border);display:flex;gap:14px;align-items:baseline;}
+.step-list li:last-child{border-bottom:none;}
+.step-num{font-family:var(--mono);font-size:9px;color:var(--teal);flex-shrink:0;width:24px;}
+.step-text{font-size:13px;color:var(--g1);line-height:1.6;}
+.step-text strong{color:var(--white);}
+
+/* ── Day blocks ── */
+.day-block{margin-bottom:10px;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;}
+.day-hdr{display:flex;align-items:center;gap:14px;padding:13px 18px;background:var(--s1);cursor:pointer;user-select:none;}
+.day-hdr:hover{background:var(--s2);}
+.day-num-badge{font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--teal);background:var(--teal-lo);border:0.5px solid var(--teal-b);border-radius:4px;padding:2px 8px;flex-shrink:0;}
+.day-name{font-size:14px;font-weight:500;color:var(--white);flex:1;}
+.day-theme{font-family:var(--mono);font-size:10px;color:var(--g2);flex-shrink:0;}
+.chev{color:var(--g2);font-size:16px;flex-shrink:0;transition:transform 0.2s;}
+.chev.open{transform:rotate(180deg);}
+.day-body{display:none;padding:16px 18px 20px;}
+.day-body.open{display:block;}
+
+.eod{background:var(--s2);border:0.5px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:14px;}
+.eod-lbl{font-family:var(--mono);font-size:9px;color:var(--g2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;}
+.eod-txt{font-size:13px;color:var(--white);font-weight:500;line-height:1.5;}
+
+.dev-section{margin-bottom:18px;}
+.dev-label{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;padding:5px 10px;border-radius:4px;display:inline-block;margin-bottom:12px;}
+.dev-label-a{color:var(--teal);background:var(--teal-lo);border:0.5px solid var(--teal-b);}
+.dev-label-b{color:var(--blue);background:rgba(74,158,232,0.09);border:0.5px solid rgba(74,158,232,0.28);}
+
+.sync-bar{background:rgba(212,83,126,0.08);border:0.5px solid rgba(212,83,126,0.25);border-radius:8px;padding:12px 14px;margin-top:14px;}
+.sync-lbl{font-family:var(--mono);font-size:9px;color:var(--pink);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;}
+.sync-txt{font-size:13px;color:var(--g1);line-height:1.55;}
+.sync-txt strong{color:var(--white);}
+
+.blocker-bar{background:rgba(226,75,74,0.07);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;}
+.blocker-lbl{font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;}
+.blocker-txt{font-size:13px;color:var(--g1);line-height:1.55;}
+.blocker-txt strong{color:var(--white);}
+
+.badge{display:inline-block;font-family:var(--mono);font-size:9px;padding:1px 7px;border-radius:99px;margin-left:4px;vertical-align:middle;}
+.b-b{background:rgba(0,166,147,0.12);color:var(--teal);}
+.b-t{background:rgba(239,159,39,0.12);color:var(--amber);}
+.b-s{background:rgba(74,158,232,0.12);color:var(--blue);}
+
+/* ── Workflow section ── */
+.rule{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border);align-items:baseline;}
+.rule:last-child{border-bottom:none;}
+.rule-n{font-family:var(--mono);font-size:10px;color:var(--teal);}
+.rule-t{font-size:13px;color:var(--g1);line-height:1.6;}
+.rule-t strong{color:var(--white);}
+
+.callout{border-radius:10px;padding:13px 16px;margin:12px 0;display:flex;gap:10px;align-items:baseline;}
+.callout-teal{background:var(--teal-lo);border:0.5px solid var(--teal-b);}
+.callout-amber{background:rgba(239,159,39,0.08);border:0.5px solid rgba(239,159,39,0.25);}
+.callout-red{background:rgba(226,75,74,0.07);border:0.5px solid rgba(226,75,74,0.25);}
+.cm{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:99px;flex-shrink:0;letter-spacing:0.06em;}
+.cm-t{background:var(--teal-mid);color:var(--teal);}
+.cm-a{background:rgba(239,159,39,0.18);color:var(--amber);}
+.cm-r{background:rgba(226,75,74,0.18);color:var(--red);}
+.callout-body{font-size:13px;color:var(--g1);line-height:1.6;}
+.callout-body strong{color:var(--white);}
+
+/* ── AGENTS.md ── */
+.agents-block{background:#03030c;border:0.5px solid var(--teal-b);border-radius:12px;overflow:hidden;margin:14px 0;}
+.agents-hdr{background:var(--teal-lo);border-bottom:0.5px solid var(--teal-b);padding:8px 16px;display:flex;align-items:center;gap:8px;}
+.agents-hdr-name{font-family:var(--mono);font-size:10px;color:var(--teal);}
+.agents-body{padding:16px 18px;font-family:var(--mono);font-size:11px;line-height:1.8;color:#9db4bb;white-space:pre-wrap;}
+.agents-body .c{color:#3d6870;}
+.agents-body .k{color:var(--teal);}
+
+/* FOOTER */
+.footer{margin-top:72px;padding-top:22px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;}
+.footer span{font-family:var(--mono);font-size:10px;color:var(--g2);}
+.footer span:last-child{color:var(--teal);}
+
+@media(max-width:600px){
+  .wrap{padding:40px 18px 80px;}
+  .nav{padding:10px 18px;margin:0 -18px 40px;}
+  .day-theme{display:none;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="#codex">Codex workflow</a>
+  <a href="#agents">AGENTS.md</a>
+  <a href="#prompts">Prompt patterns</a>
+  <a href="#day0">Day 0</a>
+  <a href="#day1">Day 1</a>
+  <a href="#day2">Day 2</a>
+  <a href="#day3">Day 3</a>
+  <a href="#day4">Day 4</a>
+  <a href="#day5">Day 5</a>
+  <a href="#day6">Day 6</a>
+  <a href="#day7">Demo</a>
+</nav>
+
+<div class="wrap">
+
+<!-- COVER -->
+<div class="kicker">Ghost Pay · Codex Sprint Guide</div>
+<h1>Build it with <span>Codex</span></h1>
+<p class="sub">The day-by-day breakdown for two devs, formatted for use with OpenAI Codex. Includes how to set up the agent, how to prompt it at each stage, and how to stay in control of what it builds.</p>
+
+<div class="divider"></div>
+
+<!-- ══ HOW TO USE CODEX ITERATIVELY ══ -->
+<div id="codex">
+  <div class="sec-label">How to use Codex on this project</div>
+  <h2>The iterative workflow</h2>
+  <p>Codex is a cloud-based software engineering agent — it runs in a sandbox with your GitHub repo preloaded, writes code, runs commands, and proposes changes for you to review. The key mental model shift: <strong style="color:var(--white);">treat it like a fast junior dev you review, not a magic button you trust blindly.</strong></p>
+
+  <div class="card card-teal" style="margin:18px 0;">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--teal);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">The core loop — repeat every task</div>
+    <ol class="step-list">
+      <li><span class="step-num">01</span><span class="step-text"><strong>Give Codex one task at a time.</strong> Not the whole day, not two features. One scoped task. "Build the persistent notification with an action button that fires an Intent to open the overlay Activity."</span></li>
+      <li><span class="step-num">02</span><span class="step-text"><strong>Read the diff before accepting.</strong> Codex shows you what changed. Read every file it touched. If you don't understand a line, ask Codex to explain it in the same session.</span></li>
+      <li><span class="step-num">03</span><span class="step-text"><strong>Test it on the device before the next task.</strong> Never stack two Codex tasks without running the last one. Bugs compound and become impossible to trace.</span></li>
+      <li><span class="step-num">04</span><span class="step-text"><strong>When it breaks, paste the full error into Codex.</strong> Don't paraphrase. Paste the exact terminal output or logcat. Codex fixes errors better with exact text than with descriptions.</span></li>
+      <li><span class="step-num">05</span><span class="step-text"><strong>After it works, ask Codex to explain what it built.</strong> "Explain what this function does and why you structured it this way." This is how you learn the codebase as you go.</span></li>
+    </ol>
+  </div>
+
+  <div class="card card-amber" style="margin-bottom:12px;">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">What Codex is bad at for this project</div>
+    <div class="rule"><span class="rule-n">—</span><span class="rule-text" style="font-size:13px;color:var(--g1);">Anything requiring a real connected device. It can't test mic capture, overlay rendering, or FCM delivery. <strong style="color:var(--white);">You must test those manually.</strong></span></div>
+    <div class="rule"><span class="rule-n">—</span><span class="rule-text" style="font-size:13px;color:var(--g1);">Broad vague prompts. "Build the backend" will produce something unfocused. "Write the /voice-ingest Firebase Cloud Function that accepts a multipart audio file, calls Whisper, and returns the JSON contract" produces something usable.</span></div>
+    <div class="rule"><span class="rule-n">—</span><span class="rule-text" style="font-size:13px;color:var(--g1);">Anything touching secrets or API keys. Never put real keys in prompts. Use environment variable names only. Codex writes the code; you fill in the values.</span></div>
+  </div>
+
+  <div class="callout callout-teal">
+    <span class="cm cm-t">tip</span>
+    <div class="callout-body"><strong>Assign parallel tasks when the two dev repos are independent.</strong> Dev A and Dev B are building completely separate codebases until Day 2. Run Codex sessions simultaneously — one for the Nuxt/Capacitor repo, one for the Firebase repo. They don't block each other at all until the integration sync.</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ AGENTS.MD ══ -->
+<div id="agents">
+  <div class="sec-label">Setup — AGENTS.md</div>
+  <h2>Write this before your first Codex session</h2>
+  <p>AGENTS.md is a file you put in the root of each repo. Codex reads it before every task — it's your standing instructions. Without it, Codex guesses your conventions. With it, every output fits your project from day one. Create one for each repo.</p>
+
+  <div style="font-family:var(--mono);font-size:10px;color:var(--teal);margin:16px 0 6px;letter-spacing:0.08em;">Dev A repo — AGENTS.md</div>
+  <div class="agents-block">
+    <div class="agents-hdr"><span class="agents-hdr-name">AGENTS.md</span></div>
+    <div class="agents-body"><span class="c"># Ghost Pay — Frontend / Native (Dev A)</span>
+
+<span class="k">## Stack</span>
+- Nuxt 4 PWA mode with Capacitor for Android
+- Tailwind CSS for all styling
+- TypeScript throughout — no plain JS files
+- @capacitor/preferences for all local storage (never use localStorage)
+
+<span class="k">## Design system</span>
+- Background: #090919
+- Accent / interactive: #00A693 (teal)
+- Typography: #FFFFFF
+- Font: Sora (already imported in nuxt.config)
+
+<span class="k">## Android native rules</span>
+- Entry point is a persistent foreground notification with an action button
+- The action button fires an Intent to launch OverlayActivity.kt
+- OverlayActivity is fullscreen and transparent — Capacitor WebView mounts inside it
+- FCM receiver is a BroadcastReceiver in Kotlin — do not implement in JS
+
+<span class="k">## API contract</span>
+- Voice payload POSTs to VOICE_INGEST_URL (env var) with Bearer JWT in Authorization header
+- Response shape is always: { status, payload: { kora_url, whatsapp_sent, parsed_data, audio_feedback_url } }
+- Store kora_url and audio_feedback_url via CapacitorPreferences after each success
+
+<span class="k">## Testing</span>
+- Do not write emulator tests for mic, overlay, or FCM — these must be tested on a physical device
+- Write unit tests for utility functions (JWT generation, response parsing) only
+
+<span class="k">## Code style</span>
+- Vue components use script setup syntax
+- No options API
+- Keep components under 150 lines — split if larger
+- All async calls wrapped in try/catch with explicit error state handling</div>
+  </div>
+
+  <div style="font-family:var(--mono);font-size:10px;color:var(--blue);margin:18px 0 6px;letter-spacing:0.08em;">Dev B repo — AGENTS.md</div>
+  <div class="agents-block">
+    <div class="agents-hdr"><span class="agents-hdr-name">AGENTS.md</span></div>
+    <div class="agents-body"><span class="c"># Ghost Pay — Backend / Orchestration (Dev B)</span>
+
+<span class="k">## Stack</span>
+- Firebase Cloud Functions v2, TypeScript
+- Firestore for state (transactions, merchant profiles, FCM tokens)
+- Firebase Storage for YarnGPT audio files
+- No Express — use native Cloud Functions request/response
+
+<span class="k">## Functions</span>
+- /voice-ingest — main entry: audio → Whisper → Gemini → Kora → WhatsApp → FCM
+- /kora-webhook — receives Kora payment events, updates Firestore
+- /query-charge — fallback polling if webhook hasn't fired in 2 minutes
+
+<span class="k">## API keys (always use env vars — never hardcode)</span>
+- OPENAI_API_KEY (Whisper)
+- GEMINI_API_KEY
+- YARNGPT_API_KEY
+- KORA_SECRET_KEY
+- KORA_PUBLIC_KEY
+- WHATSAPP_TOKEN
+- WHATSAPP_PHONE_NUMBER_ID
+- JWT_SECRET
+
+<span class="k">## JSON contract (frozen — do not change field names)</span>
+Return shape from /voice-ingest:
+{ status: "success", payload: { kora_url, whatsapp_sent, parsed_data: { amount, customer, item }, audio_feedback_url } }
+
+<span class="k">## Gemini parsed intent shape (internal)</span>
+{ amount: number, description: string, customer_phone: string (E.164 format) }
+
+<span class="k">## Security</span>
+- All functions except /kora-webhook must verify JWT in Authorization header
+- /kora-webhook must verify Kora signature header before processing
+- Firestore rules: merchants read/write own data only
+
+<span class="k">## Code style</span>
+- Async/await throughout — no raw Promise chains
+- All external API calls wrapped in try/catch, log errors with structured logging
+- Functions should be under 80 lines — extract helpers if larger</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ PROMPT PATTERNS ══ -->
+<div id="prompts">
+  <div class="sec-label">Prompt patterns</div>
+  <h2>How to write prompts that actually work</h2>
+  <p>The single biggest reason Codex produces unusable code is a vague prompt. Here are the four patterns that cover every task in this sprint.</p>
+
+  <div style="margin-bottom:20px;">
+    <div style="font-size:13px;font-weight:500;color:var(--white);margin-bottom:6px;">Pattern 1 — Build a new thing</div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">template <span class="copy-btn" onclick="copyPrompt(this)">copy</span></div>
+      <div class="prompt">Build [specific thing]. It should [behaviour 1], [behaviour 2]. Use [specific library/approach]. The function/component should accept [inputs] and return/emit [output]. Do not use [thing to avoid].</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <div style="font-size:13px;font-weight:500;color:var(--white);margin-bottom:6px;">Pattern 2 — Fix a broken thing</div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">template <span class="copy-btn" onclick="copyPrompt(this)">copy</span></div>
+      <div class="prompt">This is broken. Here is the exact error:
+
+[paste full error / logcat / terminal output]
+
+Here is the relevant code:
+
+[paste the function or file]
+
+Fix it. Explain what was wrong before making the change.</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <div style="font-size:13px;font-weight:500;color:var(--white);margin-bottom:6px;">Pattern 3 — Understand what Codex built</div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">template <span class="copy-btn" onclick="copyPrompt(this)">copy</span></div>
+      <div class="prompt">Explain what [function/file/component] does, step by step. Explain why you chose this approach over [alternative]. What would break if [specific part] was removed?</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <div style="font-size:13px;font-weight:500;color:var(--white);margin-bottom:6px;">Pattern 4 — Integration check</div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">template <span class="copy-btn" onclick="copyPrompt(this)">copy</span></div>
+      <div class="prompt">Dev B's endpoint now returns this shape:
+
+[paste actual JSON response]
+
+Update [component/function] to consume this correctly. The field I need is [field name]. Handle the case where [field] is null or missing.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber">
+    <span class="cm cm-a">rule</span>
+    <div class="callout-body"><strong>Never start a prompt with "Can you..."</strong> Start with an imperative verb: Build, Write, Fix, Add, Update, Refactor, Explain. Codex responds to commands, not questions. Shorter prompts with clear verbs outperform long polite paragraphs.</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ DAYS ══ -->
+<div id="day0">
+  <div class="sec-label">Sprint days</div>
+  <h2>Day-by-day breakdown</h2>
+  <p style="margin-bottom:20px;font-family:var(--mono);font-size:11px;color:var(--g2);">Each task comes with the Codex prompt to paste. Click to expand each day.</p>
+</div>
+
+<div id="days-container"></div>
+
+<div class="footer">
+  <span>Ghost Pay · Kora Hackathon 2026 · Codex Sprint Guide</span>
+  <span>ghost-pay.internal</span>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+const days = [
+  {
+    id:"day0", num:"Day 0", name:"Before the sprint starts", theme:"Do this tonight",
+    eod:"WhatsApp template submitted. Firebase project live. Both repos on GitHub with AGENTS.md committed. Both devs can clone and run.",
+    blocker:"Submit the WhatsApp Business utility template to Meta right now — approval takes 1–72 hours. Template: \"Your payment link for {{1}} is ready: {{2}}\" — Category: Utility. This is the only dependency you can't control.",
+    a:[
+      {
+        task:"Scaffold Nuxt 4 project with Capacitor",
+        badge:"build",
+        prompt:`Create a new Nuxt 4 project in PWA mode. Then add Capacitor and configure it for Android. Run the following in sequence:
+
+npx nuxi init ghost-pay-client --template pwa
+cd ghost-pay-client
+npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/preferences @capacitor/microphone
+npx cap init "Ghost Pay" "com.ghostpay.app"
+npx cap add android
+
+Then create a basic nuxt.config.ts with PWA settings enabled and a placeholder index page that just renders a centred div with the text "Ghost Pay". Commit everything.`
+      },
+      {
+        task:"Add EncryptedSharedPreferences to Android build",
+        badge:"build",
+        prompt:`In the Ghost Pay Android project (android/app/build.gradle), add the following dependency:
+
+implementation "androidx.security:security-crypto:1.1.0-alpha06"
+
+Then verify that @capacitor/preferences is correctly installed and create a composable called useSecureStorage.ts that wraps CapacitorPreferences with typed get/set/remove methods for these keys: jwt_token, merchant_id, merchant_name. Export all three methods.`
+      }
+    ],
+    b:[
+      {
+        task:"Initialise Firebase project with all services",
+        badge:"build",
+        prompt:`Initialise a Firebase project for Ghost Pay. Set up the following:
+- Cloud Functions (TypeScript, Node 20)
+- Firestore database
+- Firebase Storage
+- Firebase Cloud Messaging (FCM)
+
+Create the functions/src/index.ts file with three stub HTTP functions exported:
+1. voiceIngest — POST, returns mock JSON: { status: "success", payload: { kora_url: "https://checkout.korapay.com/test_123", whatsapp_sent: true, parsed_data: { amount: 15000, customer: "+2348031234567", item: "Test item" }, audio_feedback_url: "https://example.com/audio.mp3" } }
+2. koraWebhook — POST, returns { received: true }
+3. queryCharge — GET, returns { status: "pending" }
+
+Deploy immediately so Dev A has a real URL to build against.`
+      },
+      {
+        task:"Write AGENTS.md and project README",
+        badge:"build",
+        prompt:`Create an AGENTS.md file in the root of the Firebase functions repo with the full project context: stack (Firebase Cloud Functions TypeScript), all env var names (OPENAI_API_KEY, GEMINI_API_KEY, YARNGPT_API_KEY, KORA_SECRET_KEY, KORA_PUBLIC_KEY, WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, JWT_SECRET), the frozen JSON contract shape for /voice-ingest, the Gemini parsed intent shape, and coding conventions (async/await, try/catch on all external calls, structured logging). Also create a .env.example file listing all env vars with placeholder values.`
+      }
+    ],
+    sync:null
+  },
+  {
+    id:"day1", num:"Day 1", name:"Foundation", theme:"Independently buildable by EOD",
+    eod:"Dev A can tap a notification button and see the overlay UI launch. Dev B can receive a real audio file and return the correct JSON shape from a deployed function.",
+    blocker:null,
+    a:[
+      {
+        task:"Build the persistent foreground notification",
+        badge:"build",
+        prompt:`In the Ghost Pay Android project, create a Kotlin foreground service called GhostPayNotificationService.kt. It should:
+1. Show a persistent notification with the title "Ghost Pay" and subtitle "Ready to collect payment"
+2. Include an action button labelled "Collect Payment"
+3. When the action button is tapped, fire an explicit Intent to launch OverlayActivity (create a stub for this class if it doesn't exist)
+4. Register the service in AndroidManifest.xml with FOREGROUND_SERVICE permission
+5. Auto-start the service when the app launches from MainActivity.kt
+
+Use NotificationCompat.Builder and a NotificationChannel with IMPORTANCE_LOW so it appears quietly.`
+      },
+      {
+        task:"Build the fullscreen transparent overlay Activity",
+        badge:"build",
+        prompt:`Create OverlayActivity.kt in the Ghost Pay Android project. It should:
+1. Be a fullscreen Activity with a transparent background (style: Theme.Translucent.NoTitleBar.Fullscreen)
+2. Mount the Capacitor WebView inside it pointing to the Nuxt app's /overlay route
+3. Register in AndroidManifest.xml with the correct intent filter to receive the action button Intent
+4. Have a close() method that dismisses the Activity and returns to whatever app was open
+
+Register the transparent activity style in res/values/styles.xml.`
+      },
+      {
+        task:"Build the mic UI component",
+        badge:"build",
+        prompt:`Create a Vue component called MicButton.vue in the Ghost Pay Nuxt app. It should have four visual states controlled by a prop called state (idle | recording | processing | success | error).
+
+- idle: a white circle with a mic icon, subtle teal pulse animation
+- recording: teal circle, waveform animation (3 animated vertical bars), "Listening..." label below
+- processing: dark circle with a spinning teal ring, "Processing..." label
+- success: teal circle with a checkmark, "Sent!" label
+- error: red circle with X icon, show the error.message prop
+
+Use only Tailwind classes. The component should emit a 'tap' event when clicked in idle state. Colours: teal is #00A693, background is #090919.`
+      },
+      {
+        task:"Wire microphone capture and POST to backend",
+        badge:"build",
+        prompt:`In the Ghost Pay Nuxt app, create a composable called useVoiceCapture.ts. It should:
+1. Use @capacitor/microphone to request permission and record audio on startRecording() and stop on stopRecording()
+2. Convert the recorded audio to a Blob
+3. POST the Blob as multipart/form-data to the VOICE_INGEST_URL environment variable, with Authorization: Bearer [jwt from CapacitorPreferences] header
+4. Return { loading, error, response } reactive refs
+5. On success, store response.payload.kora_url and response.payload.audio_feedback_url to CapacitorPreferences
+
+Handle the case where microphone permission is denied — set error to "Microphone permission denied. Tap to retry."`
+      }
+    ],
+    b:[
+      {
+        task:"Integrate Whisper API into voice-ingest function",
+        badge:"build",
+        prompt:`Update the voiceIngest Cloud Function to:
+1. Accept multipart/form-data with an audio file field
+2. Extract the audio buffer from the request
+3. POST it to OpenAI's Whisper API endpoint (https://api.openai.com/v1/audio/transcriptions) using the model whisper-1 and language "en"
+4. Include this system prompt hint to improve Nigerian accent accuracy: "This is Nigerian English. Common terms: 'k' means thousand (e.g. '15k' = 15000), 'naira' is the currency. Phone numbers start with '070', '080', '081', '090', '091'. Transcribe numbers as digits."
+5. Return the transcript string
+6. Log the transcript with console.log for debugging
+
+Use the OPENAI_API_KEY environment variable. Wrap the Whisper call in try/catch and return { status: "error", message: err.message } on failure.`
+      },
+      {
+        task:"Integrate Gemini for intent parsing",
+        badge:"build",
+        prompt:`Add Gemini 1.5 Flash parsing to the voiceIngest Cloud Function after the Whisper transcript is received. 
+
+Send this prompt to Gemini:
+"Extract payment intent from this Nigerian merchant voice command. Return ONLY valid JSON with no markdown, no explanation:
+{ amount: number (in naira, convert 'k' to thousands, 'bag' to 100000), description: string, customer_phone: string (E.164 format, add +234 prefix, remove leading 0) }
+If any field cannot be determined, set it to null.
+Voice command: [transcript]"
+
+Parse the JSON response. If parsing fails or any required field is null, return { status: "error", message: "Could not understand the command. Please try again." }
+
+Use the GEMINI_API_KEY environment variable with the @google/generative-ai package.`
+      },
+      {
+        task:"Write 6 test transcripts for Gemini parsing",
+        badge:"test",
+        prompt:`Write a test file functions/src/tests/geminiParser.test.ts that tests the Gemini intent parser with these 6 Nigerian voice command transcripts:
+
+1. "Generate 15k link for the lace fabric and send to 08031234567"
+2. "Create payment link of 5 bags for the sneakers, send to 07012345678"
+3. "Bill Ade 2500 for data subscription, his number is 09011223344"
+4. "Send 50k link for ankara material to 08123456789"
+5. "Abeg make 3500 naira link for phone case, customer na 08055667788"
+6. "Generate 1.5k link for earrings go 07098765432"
+
+Each test should assert that the parsed output has a numeric amount, a non-null description, and a phone in E.164 format starting with +234. Log the raw Gemini output for each so you can inspect it.`
+      }
+    ],
+    sync:"End of Day 1: Dev A POSTs a real audio recording (record yourself saying 'Generate 15k link for lace fabric and send to 08031234567') to Dev B's deployed /voice-ingest URL. Both devs check the JSON response shape matches the contract exactly. Fix any field name mismatches before Day 2."
+  },
+  {
+    id:"day2", num:"Day 2", name:"Core pipeline", theme:"Money moves end-to-end in sandbox",
+    eod:"A spoken voice command produces a real Kora checkout URL and a WhatsApp message lands on a test number.",
+    blocker:null,
+    a:[
+      {
+        task:"Handle the success response from the backend",
+        badge:"build",
+        prompt:`Update the useVoiceCapture composable and the /overlay page to handle a successful response from /voice-ingest:
+
+1. On success: store kora_url and audio_feedback_url to CapacitorPreferences using useSecureStorage
+2. Open kora_url using Capacitor Browser (npm install @capacitor/browser, npx cap sync)
+3. Update MicButton state to 'success'
+4. Show a confirmation card below the mic button with: the item name (parsed_data.item), the amount formatted as ₦15,000, and the customer number
+
+On error: set MicButton state to 'error' and show error.message.`
+      },
+      {
+        task:"Implement JWT generation on login",
+        badge:"build",
+        prompt:`Create a login screen at /login in the Nuxt app. It should have two fields: merchant name and phone number, and a "Start Ghost Pay" button.
+
+On submit:
+1. POST to the MERCHANT_AUTH_URL env var with { name, phone }
+2. Receive a JWT from the response
+3. Store the JWT to CapacitorPreferences under the key "jwt_token"
+4. Store name under "merchant_name" and phone under "merchant_id"
+5. Navigate to /overlay
+
+Also create a middleware auth.ts that redirects to /login if jwt_token is missing from CapacitorPreferences. Apply it to the /overlay route.`
+      }
+    ],
+    b:[
+      {
+        task:"Integrate Kora checkout initialization",
+        badge:"build",
+        prompt:`Add Kora payment initialization to the voiceIngest Cloud Function after Gemini parsing succeeds.
+
+POST to https://api.korapay.com/merchant/api/v1/charges/initialize with:
+- Headers: Authorization: Bearer KORA_SECRET_KEY
+- Body: { amount: parsedData.amount, currency: "NGN", reference: "gp_" + Date.now(), narration: parsedData.description, customer: { email: "customer@ghostpay.app", name: "Ghost Pay Customer" }, notification_url: KORA_WEBHOOK_URL env var }
+
+Extract checkout_url from the response. Add it to the function's return payload as kora_url. Log the Kora reference for debugging.
+
+Use try/catch — if Kora fails, return { status: "error", message: "Payment link generation failed" }.`
+      },
+      {
+        task:"Integrate WhatsApp Business Cloud API send",
+        badge:"build",
+        prompt:`After Kora initialization succeeds in voiceIngest, send a WhatsApp template message to parsedData.customer_phone.
+
+POST to https://graph.facebook.com/v19.0/WHATSAPP_PHONE_NUMBER_ID/messages with:
+- Authorization: Bearer WHATSAPP_TOKEN
+- Body: { messaging_product: "whatsapp", to: parsedData.customer_phone, type: "template", template: { name: "ghost_pay_payment_link", language: { code: "en" }, components: [{ type: "body", parameters: [{ type: "text", text: parsedData.description }, { type: "text", text: koraCheckoutUrl }] }] } }
+
+Set whatsapp_sent: true in the response if the API call succeeds, false if it fails (do not throw — WhatsApp failure should not break the whole flow).`
+      },
+      {
+        task:"Write the Kora webhook handler",
+        badge:"build",
+        prompt:`Implement the koraWebhook Cloud Function. It should:
+
+1. Extract the x-korapay-signature header
+2. Verify the HMAC-SHA256 signature using KORA_SECRET_KEY against the raw request body
+3. If signature is invalid, return 401
+4. Parse the event body — if event.data.status is "success", update the Firestore document at transactions/{reference} with { status: "paid", paidAt: FieldValue.serverTimestamp() }
+5. If the document doesn't exist, create it with the full event data
+6. Return 200 to Kora immediately
+
+Also write a createTransaction helper that Dev B will call from voiceIngest to pre-create the Firestore document at { status: "pending", amount, customer, item, createdAt } before generating the Kora link.`
+      }
+    ],
+    sync:"End of Day 2: Run the full sandbox pipeline on Dev A's physical phone. Speak a command, confirm the JSON response arrives, confirm a real Kora sandbox URL is returned, confirm a WhatsApp message arrives on a test number. Record a screen recording of this — it is your backup demo video regardless of how rough it looks."
+  },
+  {
+    id:"day3", num:"Day 3", name:"Payment confirmation loop", theme:"The merchant hears the money",
+    eod:"When a Kora sandbox payment is made, the merchant's phone plays a YarnGPT voice confirmation within 10 seconds.",
+    blocker:null,
+    a:[
+      {
+        task:"Write the FCM background receiver in Kotlin",
+        badge:"build",
+        prompt:`Create GhostPayMessagingService.kt extending FirebaseMessagingService. It should:
+
+1. Override onMessageReceived(message: RemoteMessage)
+2. Check if message.data["type"] == "payment_confirmed"
+3. Extract audio_url, amount, and item from message.data
+4. Show a high-priority local notification: title "Payment Received 🎉", body "₦{amount} for {item} — tap to view"
+5. Start playing the audio_url MP3 using MediaPlayer on the device's default stream
+6. Override onNewToken(token: String) — POST the token to MERCHANT_FCM_URL env var with the merchant JWT in the header
+
+Register the service in AndroidManifest.xml with the MESSAGING_EVENT intent filter.`
+      },
+      {
+        task:"Test and pick the YarnGPT voice",
+        badge:"test",
+        prompt:`Write a standalone Node.js script test-yarngpt.js that calls the YarnGPT API for each of these 4 confirmation phrases, saves each as an MP3, and logs the filename:
+
+1. "Boss, your payment don enter! Fifteen thousand naira for the lace fabric."
+2. "Oga, money don land. Customer don pay fifteen thousand."
+3. "Payment confirmed! Fifteen k for lace fabric don enter your account."
+4. "Your customer don pay. Fifteen thousand naira received for lace fabric."
+
+Test with these voices: osagie, tayo, idera. Use YARNGPT_API_KEY env var.
+
+API: POST https://yarngpt.ai/api/v1/tts with { text, voice, response_format: "mp3" } and Authorization: Bearer YARNGPT_API_KEY.
+
+Print "DONE" after all 12 files are saved.`
+      },
+      {
+        task:"Build the transaction history screen",
+        badge:"build",
+        prompt:`Create a page /history in the Nuxt app. It should:
+
+1. On mount, fetch the last 20 transactions from Firestore for the current merchant_id (read from CapacitorPreferences)
+2. Display each as a card showing: item name, amount formatted as ₦X,XXX, customer number (last 4 digits only, e.g. ****7788), status badge (pending = amber, paid = teal, failed = red), and relative time ("2 mins ago")
+3. Show a loading skeleton while fetching
+4. Show an empty state illustration if there are no transactions
+
+Use the Firebase JS SDK (already installed). Listen to the Firestore collection with onSnapshot so the status updates live when a payment comes in.`
+      }
+    ],
+    b:[
+      {
+        task:"Generate YarnGPT audio and dispatch FCM on payment",
+        badge:"build",
+        prompt:`After the koraWebhook function updates Firestore status to "paid", trigger the following sequence:
+
+1. Fetch the transaction document to get item name and amount
+2. POST to YarnGPT API: { text: "Boss, your payment don enter! [amount formatted as 'Fifteen thousand naira'] for the [item].", voice: "osagie", response_format: "mp3" } with Authorization: Bearer YARNGPT_API_KEY
+3. Upload the returned MP3 buffer to Firebase Storage at path audio/confirm_{transactionId}.mp3, make it publicly accessible
+4. Fetch the merchant's FCM token from Firestore at merchants/{merchantId}.fcmToken
+5. Send a high-priority FCM data message (not notification) to that token: { type: "payment_confirmed", audio_url: storagePublicUrl, amount: String(amount), item: itemName }
+
+Extract this into a helper function called dispatchPaymentConfirmation(transactionId, merchantId).`
+      },
+      {
+        task:"Write the query-charge fallback poller",
+        badge:"build",
+        prompt:`Implement the queryCharge Cloud Function as a scheduled function that runs every 2 minutes.
+
+It should:
+1. Query Firestore for all transactions where status == "pending" AND createdAt < 2 minutes ago
+2. For each such transaction, GET https://api.korapay.com/merchant/api/v1/charges/{reference} with Authorization: Bearer KORA_SECRET_KEY
+3. If the response shows status "success", call dispatchPaymentConfirmation(transactionId, merchantId) — same function used by the webhook
+4. If status is "failed", update Firestore status to "failed"
+5. Log how many transactions were checked and how many were resolved
+
+Schedule it using firebase-functions/v2/scheduler with schedule: "every 2 minutes".`
+      },
+      {
+        task:"Prompt-engineer Whisper for Nigerian amounts — spend real time here",
+        badge:"test",
+        prompt:`Write a test runner functions/src/tests/whisperNigerian.test.ts. You don't have real audio files so instead call the Gemini parser directly with these 10 pre-written transcripts that simulate common Whisper output for Nigerian speech:
+
+1. "generate 15 K link for lace fabric send to 0 8 0 3 1 2 3 4 5 6 7"
+2. "create 5 bags payment for sneakers customer number zero seven zero one two three four five six seven eight"
+3. "abeg make two five hundred link for phone case na 0 8 0 5 5 6 6 7 7 8 8"
+4. "bill am thirty K for ankara go 0 9 0 1 1 2 2 3 3 4 4"
+5. "send link 1.5k earrings to this number 0 7 0 9 8 7 6 5 4 3 2"
+
+For each, assert: amount is a valid integer, customer_phone starts with +234, description is non-empty. Log raw Gemini output for every test. If any fail, update the Gemini prompt in voiceIngest to handle that pattern before moving on.`
+      }
+    ],
+    sync:"End of Day 3: Dev B manually sets a Firestore transaction status to 'paid'. Dev A's physical device should play a YarnGPT audio confirmation within 10 seconds. Both devs must witness this live before calling Day 3 complete."
+  },
+  {
+    id:"day4", num:"Day 4", name:"Hardening", theme:"Make it not crash",
+    eod:"Full flow runs 5 consecutive times without a manual fix from either dev.",
+    blocker:"WhatsApp template should be approved by now. If not, build the wa.me fallback: instead of the Cloud API send, generate https://wa.me/{phone}?text=Payment link for {item}: {kora_url} and return it in the payload as whatsapp_deeplink. Dev A opens this with Capacitor Browser as a fallback.",
+    a:[
+      {
+        task:"Add error handling and retry UI",
+        badge:"build",
+        prompt:`Audit every async call in the Ghost Pay Nuxt app and add proper error handling:
+
+1. In useVoiceCapture: if the POST fails with a network error, set error to "Connection failed. Check your internet and try again."
+2. If the POST returns status: "error", display the message from the response
+3. Add a retry button that appears in the 'error' state of MicButton — tapping it resets state to 'idle'
+4. If Capacitor Browser fails to open kora_url, fall back to window.open(kora_url, '_blank')
+5. Add a 30-second timeout to the voice POST — if no response, set error to "Request timed out. Please try again."
+
+Also add a connection status indicator: a small dot in the top corner that shows green/red based on navigator.onLine.`
+      },
+      {
+        task:"Add JWT middleware to all functions",
+        badge:"build",
+        prompt:`Create a middleware file functions/src/middleware/auth.ts that exports a verifyJWT function. It should:
+
+1. Extract the Authorization header from the request
+2. Verify it's a valid JWT signed with JWT_SECRET using the 'jsonwebtoken' package
+3. Return the decoded merchant payload { merchantId, name } if valid
+4. Throw a 401 HttpsError if missing or invalid
+
+Apply verifyJWT to voiceIngest and queryCharge. It should not apply to koraWebhook (Kora has its own signature verification).
+
+Also create a /merchant-auth Cloud Function that accepts { name, phone }, creates or updates a Firestore document at merchants/{phone}, and returns a signed JWT with { merchantId: phone, name } valid for 30 days.`
+      }
+    ],
+    b:[
+      {
+        task:"Add idempotency and structured logging",
+        badge:"build",
+        prompt:`Add idempotency to the voiceIngest function:
+
+1. Generate a request hash from (merchantId + amount + customer_phone + Math.floor(Date.now()/30000)) — this creates a 30-second idempotency window
+2. Check Firestore for an existing document at idempotency/{hash}
+3. If it exists and was created less than 60 seconds ago, return the cached response directly
+4. If not, proceed normally and save the response at idempotency/{hash} with a TTL field of now + 5 minutes
+
+Also add structured logging throughout voiceIngest using console.log with JSON objects (not plain strings):
+- { event: "whisper_complete", transcript, duration_ms }
+- { event: "gemini_parsed", amount, customer_phone, description }
+- { event: "kora_initialized", reference, checkout_url }
+- { event: "whatsapp_sent", to, success: boolean }
+
+This makes Firebase console logs readable during the live demo.`
+      },
+      {
+        task:"Test the full fallback polling flow",
+        badge:"test",
+        prompt:`Write a test script functions/src/tests/webhookFallback.test.ts that simulates webhook failure:
+
+1. Create a test transaction in Firestore with status "pending" and a real Kora sandbox reference, with createdAt 3 minutes ago
+2. Call the queryCharge logic directly (not via HTTP) with this transaction
+3. Assert it calls the Kora GET endpoint with the correct reference
+4. Mock the Kora response to return status "success"
+5. Assert Firestore document status updates to "paid"
+6. Assert dispatchPaymentConfirmation is called with the correct IDs
+
+Log what happens at each step. This test is your proof that the fallback works before demo day.`
+      }
+    ],
+    sync:"Mid-day joint call: both devs on a call, Dev A's physical phone, run the full flow from notification tap to YarnGPT audio. Log every failure point. Assign fixes. Do not end the call until 5 clean consecutive runs complete."
+  },
+  {
+    id:"day5", num:"Day 5", name:"Polish & latency", theme:"Make it feel inevitable",
+    eod:"Demo runs tap-to-audio in under 25 seconds. Backup demo video recorded. Design system fully applied.",
+    blocker:null,
+    a:[
+      {
+        task:"Apply full design system",
+        badge:"build",
+        prompt:`Apply the Ghost Pay design system across all screens in the Nuxt app:
+
+1. Background: #090919 on all pages
+2. All interactive elements use #00A693 (teal) — buttons, active states, progress rings
+3. Typography: white (#FFFFFF) for primary text, rgba(255,255,255,0.65) for secondary text
+4. Font: import Sora from Google Fonts, apply to body
+5. Buttons: no rounded corners — use border-radius: 6px max. Solid teal fill for primary, teal border + transparent fill for secondary.
+6. Add haptic feedback using Capacitor Haptics on: recording start (MEDIUM impact), successful response (SUCCESS notification type)
+
+Install @capacitor/haptics and sync. Apply the teal glow animation to the mic button pulsing state: box-shadow: 0 0 0 0 rgba(0,166,147,0.4), animating to 0 0 0 16px transparent.`
+      },
+      {
+        task:"Pre-generate all YarnGPT confirmation audio",
+        badge:"build",
+        prompt:`Create a one-time script functions/src/scripts/generateAudio.ts that pre-generates YarnGPT confirmation MP3s and uploads them to Firebase Storage.
+
+Generate these 4 phrases with voice "osagie":
+1. "Boss, your payment don enter!" → filename: confirm_short.mp3
+2. "Payment confirmed. Money don land in your account." → confirm_medium.mp3
+3. "Transaction complete. Your customer don pay." → confirm_alt.mp3
+4. "Oga, the payment don land. Check your balance." → confirm_casual.mp3
+
+Upload each to Firebase Storage at audio/pregenerated/{filename} with public read access.
+
+Then update dispatchPaymentConfirmation to randomly select one of these 4 pre-generated URLs instead of calling the YarnGPT API live. The audio_url in the FCM payload should now always be a Firebase Storage URL.
+
+This means YarnGPT is never called during the actual demo.`
+      }
+    ],
+    b:[
+      {
+        task:"Optimize pipeline latency",
+        badge:"build",
+        prompt:`Optimize the voiceIngest Cloud Function to reduce end-to-end latency:
+
+1. Set minInstances: 1 in the function config to eliminate cold starts
+2. After Whisper completes, start the Gemini API call immediately
+3. After Gemini parsing completes, start the Kora initialization and the (optional) WhatsApp send in parallel using Promise.allSettled — do not await them sequentially
+4. Return the response as soon as Kora returns the checkout_url — do not wait for WhatsApp to complete
+5. Move the dispatchPaymentConfirmation call inside the koraWebhook function to keep voiceIngest fast
+
+Log timing at each step: { event: "timing", whisper_ms, gemini_ms, kora_ms, total_ms }. Target total_ms under 4000.`
+      },
+      {
+        task:"Seed demo Firestore data",
+        badge:"build",
+        prompt:`Create a seed script functions/src/scripts/seedDemo.ts that populates Firestore with realistic demo data for the merchant account with phone +2348031234567.
+
+Create:
+1. A merchant document at merchants/+2348031234567: { name: "Mama Chisom Boutique", phone: "+2348031234567", totalCollected: 2310000, transactionCount: 47 }
+2. 12 transaction documents in transactions/ with realistic Nigerian fashion/goods item names (lace fabric, ankara material, sneakers, wristwatch, hair extensions, phone case, earrings, handbag, body cream, fabric), amounts ranging from 1500 to 85000, statuses: 10 paid + 2 pending, createdAt timestamps spread over the last 7 days
+
+Run the seed script with: npx ts-node src/scripts/seedDemo.ts`
+      }
+    ],
+    sync:"End of Day 5: record the backup demo video. Both devs on a call. Full flow from notification tap to YarnGPT audio, on the demo device, on Nigerian mobile data. Time it. If anything is over 7 seconds, fix it now. After the video is recorded, do not touch the core pipeline code."
+  },
+  {
+    id:"day6", num:"Day 6", name:"Freeze", theme:"No new features",
+    eod:"Signed APK on the demo device. Backup video saved and playable. Pitch script timed and rehearsed.",
+    blocker:null,
+    a:[
+      {
+        task:"Build and install the release APK",
+        badge:"ship",
+        prompt:`Build the Ghost Pay release APK:
+
+1. Run npx cap sync to ensure latest web code is in the Android project
+2. In Android Studio, set the build variant to 'release'
+3. Generate a signing keystore if one doesn't exist: keytool -genkey -v -keystore ghostpay.keystore -alias ghostpay -keyalg RSA -keysize 2048 -validity 10000
+4. Build the signed APK: Build → Generate Signed Bundle / APK → APK
+5. Install directly on the demo device via ADB: adb install app-release.apk
+6. Uninstall the debug build first to avoid signing conflicts: adb uninstall com.ghostpay.app
+
+Verify the APK launches correctly, the persistent notification appears, and the overlay opens from the notification button.`
+      },
+      {
+        task:"Demo checklist — verify everything",
+        badge:"test",
+        prompt:`Create a file DEMO_CHECKLIST.md and verify each item is working on the demo device:
+
+1. Persistent notification visible in notification tray
+2. Tapping "Collect Payment" opens the Ghost Pay overlay on top of WhatsApp
+3. Microphone permission granted
+4. Voice command "Generate 15k link for lace fabric and send to [test number]" correctly parsed
+5. Kora checkout URL generated and opens in browser
+6. WhatsApp message sent to test number (or wa.me deeplink working as fallback)
+7. YarnGPT audio plays on payment — test by manually setting Firestore status to paid
+8. Transaction history shows in /history screen
+9. JWT does not expire for at least 7 days
+10. Firebase Functions are deployed to production (not emulator)
+
+Mark each as ✅ or ❌. For any ❌, create a Codex task to fix it before the session ends.`
+      }
+    ],
+    b:[
+      {
+        task:"Deploy all functions to production",
+        badge:"ship",
+        prompt:`Deploy all Ghost Pay Firebase Cloud Functions to production and verify:
+
+1. Run firebase deploy --only functions
+2. Verify all 3 functions are active in Firebase Console: voiceIngest, koraWebhook, queryCharge
+3. Check that all environment variables are set in Firebase Console → Functions → Configuration
+4. Set minInstances: 1 on voiceIngest in Firebase Console to prevent cold starts
+5. Do a live test: POST a real audio file to the production voiceIngest URL with a valid JWT — confirm the full pipeline runs
+6. Check Firebase Console → Functions → Logs — confirm structured logs are appearing correctly
+7. Check Firestore → Rules are deployed and a merchant can only read their own documents
+
+Document the production function URLs in a file called PROD_URLS.md and share with Dev A.`
+      },
+      {
+        task:"Final dress rehearsal — real transaction",
+        badge:"test",
+        prompt:`Run a complete real dress rehearsal end-to-end:
+
+1. Use the production voiceIngest URL (not emulator)
+2. Use a real Nigerian test phone number as the customer
+3. Speak the command: "Generate 15k link for lace fabric and send to [test number]"
+4. Confirm the WhatsApp message arrives on that number
+5. Complete the payment in Kora sandbox
+6. Confirm the Kora webhook fires and Firestore updates to "paid" (check Firebase Console logs)
+7. Confirm Dev A's device plays the YarnGPT confirmation audio
+8. Check the transaction appears in /history
+
+Time the entire flow from voice command to YarnGPT audio. Log the timing. If it's over 30 seconds total, something is wrong — check function logs.`
+      }
+    ],
+    sync:"End of Day 6: the demo runs clean. Both devs have watched the backup video and confirmed it's presentable. Do not write any code after this point tonight. Rest."
+  },
+  {
+    id:"day7", num:"Day 7", name:"Demo day", theme:"Ship what works",
+    eod:null,
+    blocker:null,
+    a:[
+      {
+        task:"Demo script — what to say",
+        badge:null,
+        prompt:`The live demo script (practice this out loud):
+
+"This is a Nigerian merchant selling on WhatsApp. Their buyer just said yes. Instead of leaving the chat, opening a banking app, copying a link and coming back — watch what happens."
+
+[pull down notification tray]
+"One tap."
+
+[tap Collect Payment — overlay appears over WhatsApp]
+"Ghost Pay appears over whatever app they're in."
+
+[speak the command]
+"Generate 15k link for lace fabric and send to 08031234567."
+
+[show the result — confirmation card, WhatsApp message arrives]
+"The payment link is already in the customer's WhatsApp. The merchant never left the conversation."
+
+[simulate payment — Firestore update triggers YarnGPT audio]
+"[audio plays] Boss, your payment don enter."
+
+"That audio was generated by YarnGPT — a text-to-speech model built by a University of Lagos undergraduate, trained on Nigerian speech, for Nigerian merchants. The whole stack: Whisper heard the command, Gemini understood it, Kora processed it, WhatsApp delivered it, YarnGPT confirmed it. Eight seconds. Zero context switches."`
+      }
+    ],
+    b:[
+      {
+        task:"During the demo — what to monitor",
+        badge:null,
+        prompt:`During the live demo, keep these tabs open:
+
+1. Firebase Console → Functions → Logs (filter to voiceIngest) — you'll see structured logs as the demo runs
+2. Firebase Console → Firestore → transactions collection — watch the status field update to "paid"
+3. Kora dashboard → sandbox transactions — confirm the payment registered
+
+If voiceIngest doesn't return within 10 seconds:
+→ Check logs for which API call failed
+→ If Whisper failed: ask Dev A to try the command again
+→ If Kora failed: have a pre-generated Kora sandbox URL ready to paste manually
+
+If FCM doesn't fire:
+→ Go to Firestore, manually update the transaction status to "paid" — this triggers dispatchPaymentConfirmation which fires FCM
+→ Dev A's phone plays the audio — judges see the confirmation
+
+If everything dies:
+→ Play the backup demo video immediately. Keep talking.`
+      }
+    ],
+    sync:"Pitch close: \"Ghost Pay isn't just a payment link generator. It's infrastructure for the way Nigerians actually sell. 46 million micro-merchants selling through DMs — none of them should have to stop a conversation to get paid. This is what we built in seven days. This is what the stack looks like at scale.\""
+  }
+];
+
+function renderPrompt(task){
+  const id = 'p_' + Math.random().toString(36).slice(2,8);
+  return `<div class="prompt-wrap">
+    <div class="prompt-label">${task.task}${task.badge ? `<span class="badge b-${task.badge[0]}">${task.badge}</span>` : ''} <span class="copy-btn" onclick="copyPrompt(this)" data-id="${id}">copy prompt</span></div>
+    <div class="prompt" id="${id}">${escHtml(task.prompt)}</div>
+  </div>`;
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderDay(d,i){
+  const id='dd'+i;
+  return `<div class="day-block" id="${d.id}">
+    <div class="day-hdr" onclick="tog('${id}')">
+      <span class="day-num-badge">${d.num}</span>
+      <span class="day-name">${d.name}</span>
+      <span class="day-theme">${d.theme}</span>
+      <span class="chev" id="${id}c">▾</span>
+    </div>
+    <div class="day-body" id="${id}">
+      ${d.eod?`<div class="eod"><div class="eod-lbl">EOD target</div><div class="eod-txt">${d.eod}</div></div>`:''}
+      ${d.blocker?`<div class="blocker-bar"><div class="blocker-lbl">⚠ external dependency</div><div class="blocker-txt">${d.blocker}</div></div>`:''}
+      <div class="dev-section">
+        <span class="dev-label dev-label-a">Dev A — Frontend / Native</span>
+        ${d.a.map(renderPrompt).join('')}
+      </div>
+      <div class="dev-section">
+        <span class="dev-label dev-label-b">Dev B — Backend / Functions</span>
+        ${d.b.map(renderPrompt).join('')}
+      </div>
+      ${d.sync?`<div class="sync-bar"><div class="sync-lbl">↔ sync point</div><div class="sync-txt">${d.sync}</div></div>`:''}
+    </div>
+  </div>`;
+}
+
+function tog(id){
+  const b=document.getElementById(id);
+  const c=document.getElementById(id+'c');
+  const open=b.classList.toggle('open');
+  c.classList.toggle('open',open);
+}
+
+function copyPrompt(btn){
+  const id=btn.dataset.id;
+  const el=document.getElementById(id);
+  const text=el?el.innerText:'';
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig=btn.textContent;
+    btn.textContent='copied!';
+    setTimeout(()=>{btn.textContent=orig;},1800);
+  });
+}
+
+document.getElementById('days-container').innerHTML=days.map(renderDay).join('');
+tog('dd0');
+tog('dd1');
+</script>
+</body>
+</html>

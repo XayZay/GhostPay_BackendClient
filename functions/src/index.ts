@@ -4,22 +4,100 @@ import {logger} from "firebase-functions";
 import {onRequest} from "firebase-functions/v2/https";
 import type {Request, Response} from "express";
 import jwt from "jsonwebtoken";
+import Busboy from "busboy";
+import type {Readable} from "stream";
+import FormData from "form-data";
+import fetch from "node-fetch";
+import {parseIntent} from "./geminiParser";
 
 admin.initializeApp();
 
-const mockVoicePayload = {
-  status: "success",
-  payload: {
-    kora_url: "https://checkout.korapay.com/test_123",
-    whatsapp_sent: true,
-    parsed_data: {
-      amount: 15000,
-      customer: "+2348031234567",
-      item: "Test item",
-    },
-    audio_feedback_url: "https://example.com/audio.mp3",
-  },
-} as const;
+const WHISPER_PROMPT =
+  "This is Nigerian English. Common terms: 'k' means thousand " +
+  "(e.g. '15k' = 15000), 'naira' is the currency. Phone numbers " +
+  "start with '070', '080', '081', '090', '091'. " +
+  "Transcribe numbers as digits.";
+
+interface AudioFile {
+  buffer: Buffer;
+  filename: string;
+  mimeType: string;
+}
+
+/**
+ * Parse multipart/form-data and extract the first audio file field.
+ */
+const parseMultipart = (req: Request): Promise<AudioFile> => {
+  return new Promise((resolve, reject) => {
+    const bb = Busboy({headers: req.headers});
+    const chunks: Buffer[] = [];
+    let filename = "audio.wav";
+    let mimeType = "audio/wav";
+
+    bb.on(
+      "file",
+      (_field: string, stream: Readable, info: {filename: string; mimeType: string}) => {
+        filename = info.filename || filename;
+        mimeType = info.mimeType || mimeType;
+        stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+      }
+    );
+
+    bb.on("finish", () => {
+      if (chunks.length === 0) {
+        reject(new Error("No audio file found in request"));
+        return;
+      }
+      resolve({buffer: Buffer.concat(chunks), filename, mimeType});
+    });
+
+    bb.on("error", (err: Error) => reject(err));
+
+    // Firebase Cloud Functions pre-parse the body into req.rawBody
+    const rawBody = (req as Request & {rawBody?: Buffer}).rawBody;
+    if (rawBody) {
+      bb.end(rawBody);
+    } else {
+      req.pipe(bb);
+    }
+  });
+};
+
+/**
+ * Send an audio buffer to OpenAI Whisper and return the transcript.
+ */
+const transcribeAudio = async (audio: AudioFile): Promise<string> => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+
+  const form = new FormData();
+  form.append("file", audio.buffer, {
+    filename: audio.filename,
+    contentType: audio.mimeType,
+  });
+  form.append("model", "whisper-1");
+  form.append("language", "en");
+  form.append("prompt", WHISPER_PROMPT);
+
+  const response = await fetch(
+    "https://api.openai.com/v1/audio/transcriptions",
+    {
+      method: "POST",
+      headers: {Authorization: `Bearer ${apiKey}`},
+      body: form,
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Whisper API error ${response.status}: ${body}`);
+  }
+
+  const data = (await response.json()) as {text: string};
+  return data.text;
+};
 
 const sendMethodNotAllowed = (res: Response, allowedMethod: string): void => {
   res.set("Allow", allowedMethod).status(405).json({
@@ -87,7 +165,38 @@ export const voiceIngest = onRequest(async (req, res) => {
     return;
   }
 
-  res.status(200).json(mockVoicePayload);
+  try {
+    const audio = await parseMultipart(req);
+    logger.info("Audio file received", {
+      filename: audio.filename,
+      mimeType: audio.mimeType,
+      sizeBytes: audio.buffer.length,
+    });
+
+    const transcript = await transcribeAudio(audio);
+    console.log("Whisper transcript:", transcript);
+
+    const parsed_data = await parseIntent(transcript);
+    console.log("Parsed intent:", parsed_data);
+
+    res.status(200).json({
+      status: "success",
+      payload: {
+        kora_url: "",
+        whatsapp_sent: false,
+        parsed_data: {
+          amount: parsed_data.amount,
+          customer: parsed_data.customer_phone,
+          item: parsed_data.description,
+        },
+        audio_feedback_url: "",
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("voiceIngest failed", {error: message});
+    res.status(500).json({status: "error", message});
+  }
 });
 
 export const koraWebhook = onRequest(async (req, res) => {

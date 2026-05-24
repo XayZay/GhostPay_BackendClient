@@ -9,15 +9,33 @@
     "build": "tsc",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions,firestore:rules,firestore:indexes,storage",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "busboy": "^1.6.0",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.3.2",
-    "jsonwebtoken": "^9.0.2"
+    "form-data": "^4.0.5",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^25.9.1",
+    "@types/node-fetch": "^2.6.13",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
     "typescript": "^5.7.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/src/tests/**/*.test.ts"
+    ]
   }
 }
