@@ -21,9 +21,15 @@ This repository contains the backend and orchestration services for the Ghost Pa
 - `YARNGPT_API_KEY`
 - `KORA_SECRET_KEY`
 - `KORA_PUBLIC_KEY`
+- `KORA_WEBHOOK_URL` (public deployed URL for `/kora-webhook`)
 - `WHATSAPP_TOKEN`
 - `WHATSAPP_PHONE_NUMBER_ID`
 - `JWT_SECRET`
+
+## External Service Setup
+- Kora checkout initialization requires `KORA_SECRET_KEY` and `KORA_WEBHOOK_URL`.
+- WhatsApp sends use the `ghost_pay_payment_link` template with English (`en`) language code.
+- The WhatsApp template body expects two text parameters: item description, then Kora checkout URL.
 
 ## JSON API Contract (Frozen)
 Return shape from `/voice-ingest`:

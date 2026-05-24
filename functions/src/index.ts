@@ -167,6 +167,65 @@ const initializeKoraCharge = async (
   }
 };
 
+const sendWhatsAppPaymentLink = async (
+  parsedData: ParsedPaymentData,
+  koraCheckoutUrl: string
+): Promise<boolean> => {
+  try {
+    const token = process.env.WHATSAPP_TOKEN;
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+    if (!token || !phoneNumberId) {
+      throw new Error("WhatsApp environment variables are not configured");
+    }
+
+    const response = await fetch(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: parsedData.customer_phone,
+          type: "template",
+          template: {
+            name: "ghost_pay_payment_link",
+            language: {code: "en"},
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  {type: "text", text: parsedData.description},
+                  {type: "text", text: koraCheckoutUrl},
+                ],
+              },
+            ],
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`WhatsApp API error ${response.status}: ${body}`);
+    }
+
+    logger.info("WhatsApp payment link sent", {
+      to: parsedData.customer_phone,
+    });
+    return true;
+  } catch (error) {
+    logger.error("WhatsApp payment link failed", {
+      error,
+      to: parsedData.customer_phone,
+    });
+    return false;
+  }
+};
+
 const sendMethodNotAllowed = (res: Response, allowedMethod: string): void => {
   res.set("Allow", allowedMethod).status(405).json({
     error: "method_not_allowed",
@@ -248,12 +307,16 @@ export const voiceIngest = onRequest(async (req, res) => {
     console.log("Parsed intent:", parsedData);
 
     const koraCharge = await initializeKoraCharge(parsedData);
+    const whatsappSent = await sendWhatsAppPaymentLink(
+      parsedData,
+      koraCharge.checkoutUrl
+    );
 
     res.status(200).json({
       status: "success",
       payload: {
         kora_url: koraCharge.checkoutUrl,
-        whatsapp_sent: false,
+        whatsapp_sent: whatsappSent,
         parsed_data: {
           amount: parsedData.amount,
           customer: parsedData.customer_phone,
