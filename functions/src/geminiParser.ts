@@ -1,6 +1,6 @@
 import {GoogleGenerativeAI} from "@google/generative-ai";
 
-const GEMINI_MODEL = "gemini-3.5-flash";
+const GEMINI_MODEL = "gemini-2.0-flash";
 
 export interface ParsedIntent {
   amount: number;
